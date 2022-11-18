@@ -12,7 +12,7 @@
         <div class="row">
             <div class="sidebar col-lg-2 col-md-3">
                 <h2>Wiki</h2>
-                <form method="get">
+                <form action="{% url 'wiki:search' %}">
                     <input class="search" type="text" name="q" placeholder="Search Encyclopedia" list="all_entries" >
                     <datalist id="all_entries">
                         {% for entry in entries %}

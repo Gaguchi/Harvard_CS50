@@ -13,3 +13,8 @@ def entry(request, title):
         "entry" : util.get_entry(title),
         "title": title
     })
+
+def search(request):
+    return render(request, "encyclopedia/search.html",{
+        
+    })
