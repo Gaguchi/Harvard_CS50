@@ -1,7 +1,10 @@
 from django.shortcuts import render
+from django import forms
 
 from . import util
 
+class SearchForm(forms.Form):
+    
 
 def index(request):
     return render(request, "encyclopedia/index.html", {
