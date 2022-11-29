@@ -1,10 +1,14 @@
 from django.shortcuts import render
 from django import forms
+from django.http import HttpResponseRedirect
+from django.urls import reverse
 
 from . import util
 
-class SearchForm(forms.Form):
-    
+class NewEntryForm(forms.Form):
+    title = forms.CharField(label="title")
+    content = forms.CharField(label="content")
+
 
 def index(request):
     return render(request, "encyclopedia/index.html", {
@@ -17,7 +21,19 @@ def entry(request, title):
         "title": title
     })
 
-def search(request):
-    return render(request, "encyclopedia/search.html",{
-        
+def new(request):
+    if request.method == 'POST':
+        form = NewEntryForm(request.POST)
+        if form.is_valid():
+            title = form.cleaned_data["title"]
+            content = form.cleaned_data["content"]
+            f = open(f'./entries/{title}.md', "w")
+            f.write(f'{content}')
+            return HttpResponseRedirect(reverse("index"))
+        else:
+            return render(request, "encyclopedia/new.html",{
+                "form":form
+            })
+    return render(request, "encyclopedia/new.html",{
+        "form":NewEntryForm()
     })
