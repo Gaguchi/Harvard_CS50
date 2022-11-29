@@ -2,6 +2,7 @@ from django.shortcuts import render
 from django import forms
 from django.http import HttpResponseRedirect
 from django.urls import reverse
+import random
 
 from . import util
 
@@ -37,3 +38,7 @@ def new(request):
     return render(request, "encyclopedia/new.html",{
         "form":NewEntryForm()
     })
+
+def random_entry(request):
+    list = util.list_entries()
+    return HttpResponseRedirect(random.choice(list))
