@@ -1,15 +1,15 @@
 {% extends "encyclopedia/layout.html" %}
 
 {% block title %}
-    Encyclopedia
+    Encyclopedia - Search Results
 {% endblock %}
 
 {% block body %}
-    <h1>All Pages</h1>
+    <h1>Search Results for "{{ search_result }}"</h1>
 
     <ul>
         {% for entry in entries %}
-            <li><a href="{{entry}}">{{ entry }}</a></li>
+            <li><a href="/{{ entry }}">{{ entry }}</a></li>
         {% endfor %}
     </ul>
 

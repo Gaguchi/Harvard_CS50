@@ -5,7 +5,9 @@
 {% endblock %}
 
 {% block body %}
-    <h1>{{ title }}</h1>
-        {{ entry }}
+    <h1 style="text-decoration:underline;">{{ title }}</h1>
+    <div>{{ entry }}</div>
+
+    <a href="{% url 'edit' %}?title={{ title }}">Edit</a>
 
 {% endblock %}

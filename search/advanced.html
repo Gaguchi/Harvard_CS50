@@ -12,30 +12,49 @@
 </head>
 
 <body>
-    <nav class="navbar navbar-light bg-light">
-        <a class="navbar-brand" href="index.html">Google Search</a><br><a class="navbar-brand" href="advanced.html">Advanced Search</a>
+    <nav class="navbar navbar-light">
+        <a class="header_item" href="index.html">Google Search</a><br><a class="header_item" href="images.html">Google Images</a><br><a class="header_item" href="advanced.html">Advanced Search</a>
     </nav>
-    <div class="container">
+    <div class="appbar"> <label style="margin-left:10px"> Advanced Search</label></div>
+    <div class="line"></div>
+    <div class="adv_div">
     <form action="https://www.google.com/search">
-        <div class="row">
-            <div class="text col-md-3"><label for="">all these words: </label></div>
-            <div class="search col-md-4"><input type="text" name="as_q" id=""></div>
+        <div>
+        <div class="clear">
+            <div class="adv_left_header"><label for="">Find pages with...</label></div>
+            <div class="adv_center_header"></div>
+            <div class="adv_right_header"><label for=""> To do this in the search box</label></div>
         </div><br>
-        <div class="row">
-            <div class="text col-md-3"><label for="">this exact word or phrase: </label></div>
-            <div class="search col-md-4"><input type="text" name="as_epq" id=""></div>
+        <div class="clear">
+            <div class="adv_left"><label for="">all these words: </label></div>
+            <div class="adv_center"><input type="text" name="as_q" id=""></div>
+            <div class="adv_right"><label for="">Type the important words:  tricolor rat terrier</label></div>
         </div><br>
-        <div class="row">
-            <div class="text col-md-3"><label for="">any of these words: </label></div>
-            <div class="search col-md-4"><input type="text" name="as_oq" id=""></div>
+        <div class="clear">
+            <div class="adv_left"><label for="">this exact word or phrase: </label></div>
+            <div class="adv_center"><input type="text" name="as_epq" id=""></div>
+            <div class="adv_right"><label for=""> Put exact words in quotes: "rat terrier"</label></div>
         </div><br>
-        <div class="row">
-            <div class="text col-md-3"><label for="">none of these words: </label></div>
-            <div class="search col-md-4"><input type="text" name="as_eq" id=""></div>
+        <div class="clear">
+            <div class="adv_left"><label for="">any of these words: </label></div>
+            <div class="adv_center"><input type="text" name="as_oq" id=""></div>
+            <div class="adv_right"><label for=""> Type OR  between all the words you want:  miniature OR standard</label></div>
         </div><br>
-        <input type="submit" value="Advanced Search">
+        <div class="clear">
+            <div class="adv_left"><label for="">none of these words: </label></div>
+            <div class="adv_center"><input type="text" name="as_eq" id=""></div>
+            <div class="adv_right"><label for=""> Put a minus sign just before words you don't want:   -rodent, -"Jack Russell"</label></div>
+        </div>
+        <br>
+        <div class="clear_left"><input type="submit" class="adv_button" value="Advanced Search"></div>
+    </div>
     </form>
 </div>
+<nav class="footer bg-light">
+    <div class="footer_div"><a class="footer_item" href="">Advertising</a><a class="footer_item" href="">Business</a><a class="footer_item" href="">How Search works </a></div>
+    <div></div>
+    <div class="footer_div"><a class="footer_item" href="">Privacy</a><a class="footer_item" href="">Terms</a><a class="footer_item" href="">Settings</a></div>
+</nav>
 
 </body>
 
