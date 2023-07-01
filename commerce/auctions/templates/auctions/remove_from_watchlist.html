@@ -1,0 +1,10 @@
+{% extends "auctions/layout.html" %}
+
+{% block content %}
+    <h2>Remove from Watchlist</h2>
+    <p>Are you sure you want to remove this listing from your watchlist?</p>
+    <form action="{% url 'remove_from_watchlist' listing_id=listing_id %}" method="post">
+        {% csrf_token %}
+        <button type="submit">Remove</button>
+    </form>
+{% endblock %}
