@@ -29,12 +29,14 @@
                         <button type="submit">Remove from Watchlist</button>
                     </form>
                 {% endif %}
-                {% if is_authenticated and not listing.is_closed and not listing.is_listing_creator and listing.has_highest_bid %}
+                {% if is_authenticated and not listing.is_closed and not listing.is_listing_creator and not user.username == listing.listing.highest_bid.bidder.username %}
                 <form action="{% url 'place_bid' listing_id=listing.listing_id %}" method="post">
                     {% csrf_token %}
                     <input type="number" step="0.01" min="{{ listing.listing.current_price|floatformat }}" name="bid_amount" placeholder="Enter your bid amount" required>
                     <button type="submit">Place Bid</button>
                 </form>
+                {% elif not listing.is_listing_creator %}
+                <p>You currently have the highest bid.</p>
                 {% endif %}
                 {% if listing.is_closed and listing.is_listing_creator %}
                 <p>Auction closed. {{ listing.listing.highest_bid.bidder.username }} has won the auction.</p>
