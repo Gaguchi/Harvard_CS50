@@ -1,0 +1,12 @@
+{% extends "auctions/layout.html" %}
+
+{% block body %}
+    <h2>Comment Added</h2>
+    <p>Your comment has been added successfully.</p>
+
+    <script>
+        setTimeout(function() {
+            window.location.href = "{% url 'listing_detail' listing_id=listing.id %}";
+        }, 3000);  // Redirect after 3 seconds (adjust the duration as needed)
+    </script>
+{% endblock %}

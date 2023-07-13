@@ -6,7 +6,7 @@
     <ul>
         {% for listing in active_listings %}
         <li>
-            <h3>{{ listing.listing.title }}</h3>
+            <h3><a href="{% url 'listing_detail' listing_id=listing.listing_id %}">{{ listing.listing.title }}</a></h3>
             <p>{{ listing.listing.description }}</p>
             {% if listing.listing.current_price < listing.listing.starting_bid %}
             <p>Current Price: {{ listing.listing.starting_bid }}</p>

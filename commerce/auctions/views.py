@@ -5,7 +5,9 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from .models import Listing, Bid, Comment
+from decimal import Decimal
+from .forms import CommentForm
+from .models import Listing, Bid, Comment, Category
 
 from .models import User
 from .forms import CreateListingForm
@@ -88,7 +90,7 @@ def index(request):
         is_closed = not listing.active
         active_listings_with_data.append({
             'listing': listing,
-            'listing_id': listing.id, 
+            'listing_id': listing.id,
             'is_watchlisted': is_watchlisted,
             'has_highest_bid': has_highest_bid,
             'is_listing_creator': is_listing_creator,
@@ -101,13 +103,72 @@ def index(request):
     }
     return render(request, 'auctions/index.html', context)
 
+
+def listing_detail(request, listing_id):
+    listing = get_object_or_404(Listing, pk=listing_id)
+    is_authenticated = request.user.is_authenticated
+
+    if request.method == 'POST':
+        form = CommentForm(request.POST)
+        if form.is_valid():
+            comment = form.save(commit=False)
+            comment.listing = listing
+            comment.commenter = request.user
+            comment.save()
+            messages.success(request, 'Comment added successfully.')
+            return redirect('listing_detail', listing_id=listing_id)
+    else:
+        form = CommentForm()
+
+    context = {
+        'listing': listing,
+        'is_authenticated': is_authenticated,
+        'form': form,  # Include the CommentForm in the context
+    }
+    return render(request, 'auctions/listing_detail.html', context)
+
+
+def categories(request):
+    categories = Category.objects.all()
+    context = {
+        'categories': categories
+    }
+    return render(request, 'auctions/categories.html', context)
+
+
+def category_listings(request, category_id):
+    category = get_object_or_404(Category, pk=category_id)
+    active_listings = category.listing_set.filter(active=True)
+    context = {
+        'category': category,
+        'active_listings': active_listings
+    }
+    return render(request, 'auctions/category_listings.html', context)
+
+
 @login_required
 def add_comment(request, listing_id):
     listing = get_object_or_404(Listing, pk=listing_id)
+
     if request.method == 'POST':
-        content = request.POST['comment_content']
-        Comment.objects.create(listing=listing, commenter=request.user, content=content)
-    return redirect('index')
+        form = CommentForm(request.POST)
+        if form.is_valid():
+            comment = form.save(commit=False)
+            comment.listing = listing
+            comment.commenter = request.user
+            comment.save()
+            messages.success(request, 'Comment added successfully.')
+            return redirect('listing_detail', listing_id=listing_id)
+    else:
+        form = CommentForm()
+
+    context = {
+        'form': form,
+        'listing': listing,
+    }
+
+    return render(request, 'auctions/add_comment.html', context)
+
 
 @login_required
 def add_to_watchlist(request, listing_id):
@@ -134,13 +195,14 @@ def remove_from_watchlist(request, listing_id):
 def place_bid(request, listing_id):
     listing = get_object_or_404(Listing, pk=listing_id)
     if request.method == 'POST':
-        amount = float(request.POST['bid_amount'])
-        if amount >= listing.starting_bid and (not listing.bids.exists() or amount > listing.current_price()):
+        amount = Decimal(request.POST['bid_amount'])
+        if amount >= listing.starting_bid and (not listing.bids.exists() or amount > listing.current_price):
             Bid.objects.create(listing=listing, bidder=request.user, amount=amount)
             messages.success(request, 'Bid placed successfully.')
         else:
             messages.error(request, 'Invalid bid amount.')
     return redirect('index')
+
 
 @login_required
 def close_auction(request, listing_id):
