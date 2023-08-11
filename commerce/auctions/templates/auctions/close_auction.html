@@ -1,6 +1,6 @@
 {% extends "auctions/layout.html" %}
 
-{% block content %}
+{% block body %}
     <h2>Close Auction</h2>
     <p>Are you sure you want to close this auction?</p>
     <form action="{% url 'close_auction' listing_id=listing_id %}" method="post">

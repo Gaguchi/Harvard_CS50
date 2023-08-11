@@ -37,6 +37,8 @@
                 </form>
                 {% elif not listing.is_listing_creator %}
                 <p>You currently have the highest bid.</p>
+                {% elif listing.is_listing_creator %}
+                <p>You are the creator of the listing.</p>
                 {% endif %}
                 {% if listing.is_closed and listing.is_listing_creator %}
                 <p>Auction closed. {{ listing.listing.highest_bid.bidder.username }} has won the auction.</p>

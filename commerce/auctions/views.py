@@ -100,6 +100,7 @@ def index(request):
     context = {
         'active_listings': active_listings_with_data,
         'is_authenticated': is_authenticated,
+        'watchlist': watchlist, 
     }
     return render(request, 'auctions/index.html', context)
 
@@ -120,10 +121,20 @@ def listing_detail(request, listing_id):
     else:
         form = CommentForm()
 
+    watchlist = request.user.watchlist.all() if is_authenticated else []
+    active_listings_with_data = []
+
+    is_watchlisted = watchlist.filter(pk=listing.id).exists() if is_authenticated else False
+    is_listing_creator = listing.creator == request.user if is_authenticated else False
+    is_closed = not listing.active
+
     context = {
         'listing': listing,
         'is_authenticated': is_authenticated,
+        'is_watchlisted': is_watchlisted,
+        'is_listing_creator': is_listing_creator,
         'form': form,  # Include the CommentForm in the context
+        'is_closed': is_closed
     }
     return render(request, 'auctions/listing_detail.html', context)
 
@@ -216,3 +227,12 @@ def close_auction(request, listing_id):
         else:
             messages.error(request, 'No bids placed on this listing.')
     return redirect('index')
+
+
+@login_required
+def watchlist(request):
+    watchlist = request.user.watchlist.all()
+    context = {
+        'watchlist': watchlist
+    }
+    return render(request, 'auctions/watchlist.html', context)
