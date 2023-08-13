@@ -10,7 +10,12 @@
     <button onclick="hello()">Click Here</button>
     <script>
         function hello(){
-            alert('Hello, world!'); 
+            let heading = document.querySelector('h1');
+            if (heading.innerHTML === 'Hello!') {
+                heading.innerHTML = 'Goodbye!'
+            } else {
+                heading.innerHTML = 'Hello!'
+            }
         }
     </script>
 </body>
