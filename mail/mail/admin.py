@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import User
+from .models import User, Email
 
 # Register your models here.
 
@@ -7,3 +7,8 @@ from .models import User
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
     pass
+
+
+@admin.register(Email)
+class EmailAdmin(admin.ModelAdmin):
+    list_display = ['body']
