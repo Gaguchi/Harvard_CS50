@@ -18,8 +18,8 @@
         }
 
         document.addEventListener('DOMContentLoaded', function(){
-            document.querySelectorAll('button').forEach(gull =>{
-                gull.onclick = function(){
+            document.querySelectorAll('button').forEach(button =>{
+                button.onclick = function(){
                     showPage(this.dataset.page)
                 }
             })
