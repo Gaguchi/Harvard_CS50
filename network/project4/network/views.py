@@ -46,7 +46,7 @@ def register(request):
 @csrf_exempt
 def posts(request):
     if request.method == 'GET':
-        posts = Post.objects.all().values('id', 'user__username', 'content', 'timestamp')
+        posts = Post.objects.all().values('id', 'user__id', 'user__username', 'content', 'timestamp')
         return JsonResponse(list(posts), safe=False)
     elif request.method == 'POST':
         data = json.loads(request.body)
@@ -66,16 +66,6 @@ def like_post(request, post_id):
         post.likes.add(user)
     return JsonResponse({"message": "Liked successfully."}, status=201)
 
-@csrf_exempt
-@login_required
-def follow_user(request, user_id):
-    # Get the user to be followed
-    user_to_follow = User.objects.get(id=user_id)
-    # Get the current user
-    current_user = request.user
-    # Add the current user to the followers of the user to be followed
-    user_to_follow.followers.add(current_user)
-    return JsonResponse({"message": "Followed successfully."})
 
 def followed_posts(request):
     user = request.user
