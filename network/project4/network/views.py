@@ -1,15 +1,16 @@
+
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
-
-from .models import User
-
+from .models import User, Post, Comment
+from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.decorators import login_required
+import json
 
 def index(request):
     return render(request, "network/index.html")
-
 
 def login_view(request):
     if request.method == "POST":
@@ -41,23 +42,27 @@ def register(request):
         username = request.POST["username"]
         email = request.POST["email"]
 
-        # Ensure password matches confirmation
-        password = request.POST["password"]
-        confirmation = request.POST["confirmation"]
-        if password != confirmation:
-            return render(request, "network/register.html", {
-                "message": "Passwords must match."
-            })
 
-        # Attempt to create new user
-        try:
-            user = User.objects.create_user(username, email, password)
-            user.save()
-        except IntegrityError:
-            return render(request, "network/register.html", {
-                "message": "Username already taken."
-            })
-        login(request, user)
-        return HttpResponseRedirect(reverse("index"))
-    else:
-        return render(request, "network/register.html")
+@csrf_exempt
+@login_required
+def posts(request):
+    if request.method == 'GET':
+        posts = list(Post.objects.values())
+        return JsonResponse(posts, safe=False)
+    elif request.method == 'POST':
+        data = json.loads(request.body)
+        user = request.user
+        content = data.get("content", "")
+        post = Post.objects.create(user=user, content=content)
+        return JsonResponse({"message": "Post created successfully."}, status=201)
+
+def followed_posts(request):
+    user = request.user
+    followed_users = user.following.all()
+    posts = Post.objects.filter(user__in=followed_users).values()
+    return JsonResponse(list(posts), safe=False)
+
+def liked_posts(request):
+    user = request.user
+    posts = Post.objects.filter(likes=user).values()
+    return JsonResponse(list(posts), safe=False)
