@@ -1,4 +1,3 @@
-
 {% extends "network/layout.html" %}
 
 {% block body %}
@@ -6,65 +5,114 @@
     
     <script type="text/babel">
     
-    class App extends React.Component {
-        constructor(props) {
-            super(props);
-            this.state = {
-                posts: [],
-                newPostContent: ""
-            };
-        }
-        
-        componentDidMount() {
-            fetch('/posts')
-            .then(response => response.json())
-            .then(data => this.setState({ posts: data }));
-        }
-        
-        handleInputChange = (event) => {
-            this.setState({ newPostContent: event.target.value });
-        }
-        
-        createPost = () => {
-            fetch('/posts', {
-                method: 'POST',
-                body: JSON.stringify({
-                    content: this.state.newPostContent
-                }),
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                this.setState(prevState => ({
-                    posts: [data, ...prevState.posts],
-                    newPostContent: ""
-                }));
-            });
-        }
-        
-        render() {
-            return (
-                <div>
-                    <h1>All Posts</h1>
+        class App extends React.Component {
+            constructor(props) {
+                super(props);
+                this.state = {
+                    posts: [],
+                    newPostContent: "",
+                    username: ""
+                };
+            }
+
+            componentDidMount() {
+                fetch('/get_username')
+                .then(response => response.json())
+                .then(data => this.setState({ username: data.username }));
+
+                fetch('/posts')
+                .then(response => response.json())
+                .then(data => {
+                    const sortedData = data.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                    this.setState({ posts: sortedData });
+                });
+            }
+
+            handleInputChange = (event) => {
+                this.setState({ newPostContent: event.target.value });
+            }
+
+            createPost = () => {
+                fetch('/posts', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        content: this.state.newPostContent
+                    }),
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    this.setState(prevState => ({
+                        posts: [data, ...prevState.posts],
+                        newPostContent: ""
+                    }));
+                });
+            }
+
+            likePost = (post_id) => {
+                fetch(`/like_post/${post_id}`, { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    // Re-fetch the posts to update the UI
+                    this.componentDidMount();
+                });
+            }
+            
+            followUser = (user_id) => {
+                fetch(`/follow_user/${user_id}`, { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    // Re-fetch the posts to update the UI
+                    this.componentDidMount();
+                });
+            }
+            filterLikedPosts = () => {
+                fetch('/liked_posts')
+                .then(response => response.json())
+                .then(data => this.setState({ posts: data }));
+            }
+
+            filterFollowedPosts = () => {
+                fetch('/followed_posts')
+                .then(response => response.json())
+                .then(data => this.setState({ posts: data }));
+            }
+
+            deletePost = (post_id) => {
+                fetch(`/delete_post/${post_id}`, { method: 'DELETE' })
+                .then(response => response.json())
+                .then(data => {
+                    this.componentDidMount();  // Re-fetch the posts to update the UI
+                });
+            }
+
+            render() {
+                return (
                     <div>
-                        <input type="text" value={this.state.newPostContent} onChange={this.handleInputChange} placeholder="What's on your mind?" />
-                        <button onClick={this.createPost}>Post</button>
+                        <h1>All Posts</h1>
+                        <button onClick={this.filterLikedPosts}>Show Liked Posts</button>
+                        <button onClick={this.filterFollowedPosts}>Show Followed Posts</button>
+                        <div>
+                            <input type="text" value={this.state.newPostContent} onChange={this.handleInputChange} placeholder="What's on your mind?" />
+                            <button onClick={this.createPost}>Post</button>
+                        </div>
+                        <ul>
+                            {this.state.posts.map((post, index) => (
+                                <li key={index}>
+                                    <strong>{post.user__username}</strong>: {post.content}
+                                    <button onClick={() => this.likePost(post.id)}>Like</button>
+                                    <button onClick={() => this.followUser(post.user_id)}>Follow</button>
+                                    {this.state.username === post.user__username && <button onClick={() => this.deletePost(post.id)}>Delete</button>}
+                                </li>
+                            ))}
+                        </ul>
                     </div>
-                    <ul>
-                        {this.state.posts.map((post, index) => (
-                            <li key={index}>
-                                <strong>{post.user}</strong> {post.content}
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-            );
+                );
+            }
         }
-    }
-    
-    ReactDOM.render(<App />, document.getElementById('root'));
-    
+
+        ReactDOM.render(<App />, document.getElementById('root'));
     </script>
 {% endblock %}

@@ -44,11 +44,10 @@ def register(request):
 
 
 @csrf_exempt
-@login_required
 def posts(request):
     if request.method == 'GET':
-        posts = list(Post.objects.values())
-        return JsonResponse(posts, safe=False)
+        posts = Post.objects.all().values('id', 'user__username', 'content', 'timestamp')
+        return JsonResponse(list(posts), safe=False)
     elif request.method == 'POST':
         data = json.loads(request.body)
         user = request.user
@@ -56,13 +55,63 @@ def posts(request):
         post = Post.objects.create(user=user, content=content)
         return JsonResponse({"message": "Post created successfully."}, status=201)
 
+@csrf_exempt
+@login_required
+def like_post(request, post_id):
+    user = request.user
+    post = Post.objects.get(id=post_id)
+    if user in post.likes.all():
+        post.likes.remove(user)
+    else:
+        post.likes.add(user)
+    return JsonResponse({"message": "Liked successfully."}, status=201)
+
+@csrf_exempt
+@login_required
+def follow_user(request, user_id):
+    # Get the user to be followed
+    user_to_follow = User.objects.get(id=user_id)
+    # Get the current user
+    current_user = request.user
+    # Add the current user to the followers of the user to be followed
+    user_to_follow.followers.add(current_user)
+    return JsonResponse({"message": "Followed successfully."})
+
 def followed_posts(request):
     user = request.user
-    followed_users = user.following.all()
-    posts = Post.objects.filter(user__in=followed_users).values()
+    posts = Post.objects.filter(user__followers=user).values('id', 'user__username', 'content', 'timestamp')
     return JsonResponse(list(posts), safe=False)
 
 def liked_posts(request):
     user = request.user
-    posts = Post.objects.filter(likes=user).values()
+    posts = Post.objects.filter(likes=user).values('id', 'user__username', 'content', 'timestamp')
     return JsonResponse(list(posts), safe=False)
+
+def get_username(request):
+    if request.user.is_authenticated:
+        return JsonResponse({"username": request.user.username})
+    else:
+        return JsonResponse({"error": "Not authenticated"}, status=401)
+
+@csrf_exempt
+def delete_post(request, post_id):
+    post = Post.objects.get(id=post_id)
+    if request.user == post.user:
+        post.delete()
+        return JsonResponse({"message": "Post deleted successfully."}, status=204)
+    else:
+        return JsonResponse({"error": "You do not have permission to delete this post."}, status=403)
+
+
+@csrf_exempt
+def follow_user(request, user_id):
+    # Get the user to be followed
+    user_to_follow = User.objects.get(id=user_id)
+
+    # Get the current user
+    current_user = request.user
+
+    # Add the current user to the followers of the user to be followed
+    user_to_follow.followers.add(current_user)
+
+    return JsonResponse({"message": "Followed successfully."})
