@@ -69,12 +69,12 @@ def like_post(request, post_id):
 
 def followed_posts(request):
     user = request.user
-    posts = Post.objects.filter(user__followers=user).values('id', 'user__username', 'content', 'timestamp')
+    posts = Post.objects.filter(user__followers=user).values('id', 'user__id', 'user__username', 'content', 'timestamp')
     return JsonResponse(list(posts), safe=False)
 
 def liked_posts(request):
     user = request.user
-    posts = Post.objects.filter(likes=user).values('id', 'user__username', 'content', 'timestamp')
+    posts = Post.objects.filter(likes=user).values('id', 'user__id', 'user__username', 'content', 'timestamp')
     return JsonResponse(list(posts), safe=False)
 
 def get_username(request):
@@ -92,16 +92,21 @@ def delete_post(request, post_id):
     else:
         return JsonResponse({"error": "You do not have permission to delete this post."}, status=403)
 
-
 @csrf_exempt
 def follow_user(request, user_id):
-    # Get the user to be followed
+    # Get the user to be followed or unfollowed
     user_to_follow = User.objects.get(id=user_id)
 
     # Get the current user
     current_user = request.user
 
-    # Add the current user to the followers of the user to be followed
-    user_to_follow.followers.add(current_user)
+    # Check if the current user already follows the user to be followed
+    if user_to_follow.followers.filter(id=current_user.id).exists():
+        # Unfollow
+        user_to_follow.followers.remove(current_user)
+        return JsonResponse({"message": "Unfollowed successfully."})
+    else:
+        # Follow
+        user_to_follow.followers.add(current_user)
+        return JsonResponse({"message": "Followed successfully."})
 
-    return JsonResponse({"message": "Followed successfully."})

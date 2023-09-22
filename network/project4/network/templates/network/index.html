@@ -47,7 +47,8 @@
                     this.setState(prevState => ({
                         posts: [data, ...prevState.posts],
                         newPostContent: ""
-                    }));
+                    }))
+                    this.componentDidMount();
                 });
             }
 
@@ -64,10 +65,7 @@
             if (user_id !== undefined) {
                 fetch(`/follow_user/${parseInt(user_id)}`, { method: 'POST' })
                 .then(response => response.json())
-                .then(data => {
-                    // Update the UI or re-fetch posts
-                    this.componentDidMount();
-                });
+                .then(data => {this.componentDidMount();});
             } else {
                 console.error('User ID is undefined');
             }
@@ -100,20 +98,54 @@
                         <h1>All Posts</h1>
                         <button onClick={this.filterLikedPosts}>Show Liked Posts</button>
                         <button onClick={this.filterFollowedPosts}>Show Followed Posts</button>
-                        <div>
-                            <input type="text" value={this.state.newPostContent} onChange={this.handleInputChange} placeholder="What's on your mind?" />
-                            <button onClick={this.createPost}>Post</button>
-                        </div>
-                        <ul>
+                        <div class="feed">
+                            <div class="feed__header">
+                              <h2>Home</h2>
+                            </div>
+                      
+                            <div class="tweetBox">
+                              <form>
+                                <div class="tweetbox__input">
+                                  <img
+                                    src="https://i.pinimg.com/originals/a6/58/32/a65832155622ac173337874f02b218fb.png"
+                                    alt=""
+                                  />
+                                  <input type="text" value={this.state.newPostContent} onChange={this.handleInputChange} placeholder="What's happening?" />
+                                </div>
+                                <button onClick={this.createPost} class="tweetBox__tweetButton">Tweet</button>
+                              </form>
+                            </div>
+                            
                             {this.state.posts.map((post, index) => (
-                                <li key={index}>
-                                    <strong>{post.user__username}</strong>: {post.content}
-                                    <button onClick={() => this.likePost(post.id)}>Like</button>
-                                    <button onClick={() => this.followUser(post.user__id)}>Follow</button>
-                                    {this.state.username === post.user__username && <button onClick={() => this.deletePost(post.id)}>Delete</button>}
-                                </li>
+                                
+                                <div class="post">
+                                    <div class="post__avatar">
+                                    <img
+                                        src="https://i.pinimg.com/originals/a6/58/32/a65832155622ac173337874f02b218fb.png"
+                                        alt=""
+                                    />
+                                    </div>
+                            
+                                    <div class="post__body">
+                                    <div class="post__header">
+                                        <div class="post__headerText">
+                                        <h3>
+                                            {post.user__username}
+                                        </h3>
+                                        </div>
+                                        <div class="post__headerDescription">
+                                        <p>{post.content}</p>
+                                        </div>
+                                    </div>
+                                    <div class="post__footer">
+                                        <span class="material-icons"> <button onClick={() => this.likePost(post.id)}>Like</button> </span>
+                                        <span class="material-icons"> <button onClick={() => this.followUser(post.user__id)}>Follow</button> </span>
+                                        <span class="material-icons"> {this.state.username === post.user__username && <button onClick={() => this.deletePost(post.id)}>Delete</button>} </span>
+                                    </div>
+                                    </div>
+                                </div>
                             ))}
-                        </ul>
+                        </div>
                     </div>
                 );
             }
