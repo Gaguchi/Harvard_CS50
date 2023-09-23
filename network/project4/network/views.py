@@ -54,6 +54,49 @@ def posts(request):
         content = data.get("content", "")
         post = Post.objects.create(user=user, content=content)
         return JsonResponse({"message": "Post created successfully."}, status=201)
+    
+
+@csrf_exempt
+@login_required
+def comments(request):
+    post_id = request.GET.get('post_id', None)
+    if request.method == 'GET':
+        if post_id:
+            comments = Comment.objects.filter(post__id=post_id).values('id', 'user__id', 'user__username', 'post__id', 'content', 'timestamp')
+        else:
+            comments = Comment.objects.all().values('id', 'user__id', 'post__id', 'content', 'timestamp')
+        return JsonResponse(list(comments), safe=False)
+    elif request.method == 'POST':
+        data = json.loads(request.body)
+        user = request.user
+
+        content = data.get("content", "")
+        post_id = data.get("post_id", None)
+
+        # Validate content and post_id
+        if not content or not post_id:
+            return JsonResponse({"error": "Both content and post_id must be provided."}, status=400)
+
+        try:
+            post = Post.objects.get(id=post_id)
+        except Post.DoesNotExist:
+            return JsonResponse({"error": "Invalid post_id."}, status=400)
+
+        comment = Comment.objects.create(user=user, content=content, post=post)
+        return JsonResponse({"message": "Comment created successfully."}, status=201)
+
+@csrf_exempt
+def delete_comment(request, comment_id):
+    try:
+        comment = Comment.objects.get(id=comment_id)
+    except Comment.DoesNotExist:
+        return JsonResponse({"error": "Comment does not exist."}, status=404)
+    
+    if request.user != comment.user:
+        return JsonResponse({"error": "You do not have permission to delete this comment."}, status=403)
+    
+    comment.delete()
+    return JsonResponse({"message": "Comment deleted successfully."})
 
 @csrf_exempt
 @login_required
@@ -88,7 +131,7 @@ def delete_post(request, post_id):
     post = Post.objects.get(id=post_id)
     if request.user == post.user:
         post.delete()
-        return JsonResponse({"message": "Post deleted successfully."}, status=204)
+        return JsonResponse({"message": "Post deleted successfully."})
     else:
         return JsonResponse({"error": "You do not have permission to delete this post."}, status=403)
 

@@ -1,4 +1,5 @@
 {% extends "network/layout.html" %}
+{% load static %}
 
 {% block body %}
     <div id="root"></div>
@@ -10,8 +11,13 @@
                 super(props);
                 this.state = {
                     posts: [],
+                    comments: {},
+                    likedPosts: [],
+                    followedPosts:[],
                     newPostContent: "",
-                    username: ""
+                    newCommentContent: {},
+                    username: "",
+                    currentPostId: 1,
                 };
             }
 
@@ -25,12 +31,45 @@
                 .then(data => {
                     const sortedData = data.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
                     this.setState({ posts: sortedData });
+                    
+                    sortedData.forEach(post => {
+                        fetch(`/comments?post_id=${post.id}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            this.setState(prevState => ({
+                                comments: {
+                                    ...prevState.comments,
+                                    [post.id]: data,
+                                }
+                            }));
+                        });
+                    });
+
+                    fetch('/liked_posts')
+                    .then(response => response.json())
+                    .then(data => this.setState({ likedPosts: data }))
+                    .catch(error => console.error('Error fetching liked posts:', error));
+
+                    fetch('/followed_posts')
+                    .then(response => response.json())
+                    .then(data => this.setState({ followedPosts: data }))
+                    .catch(error => console.error('Error fetching liked posts:', error));
                 });
             }
 
             handleInputChange = (event) => {
                 this.setState({ newPostContent: event.target.value });
             }
+            
+            handleCommentChange = (event, post_id) => {
+                this.setState(prevState => ({
+                    newCommentContent: {
+                        ...prevState.newCommentContent,
+                        [post_id]: event.target.value
+                    }
+                }));
+            };
+            
 
             createPost = () => {
                 fetch('/posts', {
@@ -47,30 +86,63 @@
                     this.setState(prevState => ({
                         posts: [data, ...prevState.posts],
                         newPostContent: ""
-                    }))
+                    }));
                     this.componentDidMount();
                 });
             }
+
+            createComment = (post_id) => {
+                fetch('/comments', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        content: this.state.newCommentContent[post_id],
+                        post_id: post_id
+                    }),
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    this.setState(prevState => ({
+                        comments: {
+                            ...prevState.comments,
+                            [post_id]: [data, ...(prevState.comments[post_id] || [])]
+                        },
+                        newCommentContent: ""
+                    }));
+                    this.componentDidMount();
+                });
+            }
+            
+            deleteComment = (comment_id) => {
+                fetch(`/delete_comment/${comment_id}`, { method: 'DELETE' })
+                .then(response => response.json())
+                .then(data => {
+                    this.componentDidMount();
+                });
+            };
+            
 
             likePost = (post_id) => {
                 fetch(`/like_post/${post_id}`, { method: 'POST' })
                 .then(response => response.json())
                 .then(data => {
-                    // Re-fetch the posts to update the UI
                     this.componentDidMount();
                 });
             }
-            
-            followUser = (user_id) => {
-            if (user_id !== undefined) {
-                fetch(`/follow_user/${parseInt(user_id)}`, { method: 'POST' })
-                .then(response => response.json())
-                .then(data => {this.componentDidMount();});
-            } else {
-                console.error('User ID is undefined');
-            }
-        }
 
+            followUser = (user_id) => {
+                if (user_id !== undefined) {
+                    fetch(`/follow_user/${parseInt(user_id)}`, { method: 'POST' })
+                    .then(response => response.json())
+                    .then(data => {
+                        this.componentDidMount();
+                    });
+                } else {
+                    console.error('User ID is undefined');
+                }
+            }
 
             filterLikedPosts = () => {
                 fetch('/liked_posts')
@@ -88,7 +160,7 @@
                 fetch(`/delete_post/${post_id}`, { method: 'DELETE' })
                 .then(response => response.json())
                 .then(data => {
-                    this.componentDidMount();  // Re-fetch the posts to update the UI
+                    this.componentDidMount();
                 });
             }
 
@@ -106,10 +178,7 @@
                             <div class="tweetBox">
                               <form>
                                 <div class="tweetbox__input">
-                                  <img
-                                    src="https://i.pinimg.com/originals/a6/58/32/a65832155622ac173337874f02b218fb.png"
-                                    alt=""
-                                  />
+                                  <img src="{% static 'network/logo.png' %}" alt="" />
                                   <input type="text" value={this.state.newPostContent} onChange={this.handleInputChange} placeholder="What's happening?" />
                                 </div>
                                 <button onClick={this.createPost} class="tweetBox__tweetButton">Tweet</button>
@@ -117,31 +186,76 @@
                             </div>
                             
                             {this.state.posts.map((post, index) => (
-                                
-                                <div class="post">
+                                <div class="post" key={post.id}>
                                     <div class="post__avatar">
-                                    <img
-                                        src="https://i.pinimg.com/originals/a6/58/32/a65832155622ac173337874f02b218fb.png"
-                                        alt=""
-                                    />
+                                        <img src="{% static 'network/logo.png' %}" alt="" />
                                     </div>
-                            
                                     <div class="post__body">
-                                    <div class="post__header">
-                                        <div class="post__headerText">
-                                        <h3>
-                                            {post.user__username}
-                                        </h3>
+                                        <div class="post__header">
+                                            <div class="post__headerText">
+                                                <h3>{post.user__username}</h3>
+                                            </div>
+                                            <div class="post__headerDescription">
+                                                <p>{post.content}</p>
+                                            </div>
                                         </div>
-                                        <div class="post__headerDescription">
-                                        <p>{post.content}</p>
+                                        <div class="post__footer">
+                                            {this.state.likedPosts.some(likedPost => likedPost.id === post.id) ? (
+                                                <span class="material-icons">
+                                                    <button onClick={() => this.likePost(post.id)}>
+                                                        <img src="{% static 'network/heart2.png' %}" />
+                                                    </button>
+                                                </span>
+                                            ) : (
+                                                <span class="material-icons">
+                                                    <button onClick={() => this.likePost(post.id)}>
+                                                        <img src="{% static 'network/heart.png' %}" />
+                                                    </button>
+                                                </span>
+                                            )}
+                                            {this.state.followedPosts.some(followedPost => followedPost.id === post.id) ? (
+                                                <span class="material-icons">
+                                                    <button onClick={() => this.followUser(post.user__id)}>
+                                                        <img src="{% static 'network/check.png' %}" />
+                                                    </button>
+                                                </span>
+                                            ) : (
+                                                <span class="material-icons">
+                                                    <button onClick={() => this.followUser(post.user__id)}>
+                                                        <img src="{% static 'network/add.png' %}" />
+                                                    </button>
+                                                </span>
+                                            )}
+                                            <span class="material-icons">
+                                                {this.state.username === post.user__username && <button onClick={() => this.deletePost(post.id)}><img src="{% static 'network/delete.png' %}" /></button>}
+                                            </span>
                                         </div>
-                                    </div>
-                                    <div class="post__footer">
-                                        <span class="material-icons"> <button onClick={() => this.likePost(post.id)}>Like</button> </span>
-                                        <span class="material-icons"> <button onClick={() => this.followUser(post.user__id)}>Follow</button> </span>
-                                        <span class="material-icons"> {this.state.username === post.user__username && <button onClick={() => this.deletePost(post.id)}>Delete</button>} </span>
-                                    </div>
+                                        <div>
+                                            <h3>Comments</h3>
+                                            <div>
+                                                {Array.isArray(this.state.comments[post.id]) ? this.state.comments[post.id].map((comment, index) => (
+                                                    <div key={index}>
+                                                        <strong>{comment.user__username ? comment.user__username : 'Unknown'}</strong>: {comment.content}
+                                                        {this.state.username === comment.user__username && (
+                                                            <button onClick={() => this.deleteComment(comment.id)}>Delete</button>
+                                                        )}
+                                                    </div>
+                                                )) : null}
+                                            </div>
+                                            {this.state.username ? (
+                                                <div>
+                                                    <input 
+                                                        type="text" 
+                                                        value={this.state.newCommentContent[post.id] || ''} 
+                                                        onChange={(event) => this.handleCommentChange(event, post.id)} 
+                                                        placeholder="Add a comment..."
+                                                    />
+                                                    <button onClick={() => this.createComment(post.id)}>Comment</button>
+                                                </div>
+                                            ) : (
+                                                <p>You need to log in to comment.</p>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             ))}
