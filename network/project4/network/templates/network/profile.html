@@ -1,0 +1,20 @@
+{% extends "network/layout.html" %}
+
+{% block body %}
+    <h1>{{ profile_user.username }}'s Profile</h1>
+    <p>Followers: {{ followers_count }}</p>
+    {% if is_following %}
+        <button>Unfollow</button>
+    {% else %}
+        <button>Follow</button>
+    {% endif %}
+    <div>
+        <h3>Posts by {{ profile_user.username }}</h3>
+        {% for post in posts %}
+            <div>
+                <h5>{{ post.user.username }}</h5>
+                <p>{{ post.content }}</p>
+            </div>
+        {% endfor %}
+    </div>
+{% endblock %}

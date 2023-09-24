@@ -2,7 +2,7 @@
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.urls import reverse
 from .models import User, Post, Comment
 from django.views.decorators.csrf import csrf_exempt
@@ -43,26 +43,19 @@ def register(request):
         email = request.POST["email"]
 
 def profile(request, username):
-    try:
-        user = User.objects.get(username=username)
-    except User.DoesNotExist:
-        return JsonResponse({"error": "User does not exist."}, status=404)
+    user = get_object_or_404(User, username=username)
+    posts = Post.objects.filter(user=user).order_by('-timestamp')
+    followers_count = user.followers.count()
+    is_following = request.user in user.followers.all()
 
-    followers_count = user.followed_by.count()
-    following_count = user.followers.count()
-    posts = Post.objects.filter(user=user).values('id', 'user__id', 'user__username', 'content', 'timestamp').order_by('-timestamp')
-
-    is_following = False
-    if request.user.is_authenticated:
-        is_following = request.user in user.followed_by.all()
-
-    return JsonResponse({
-        'username': username,
+    context = {
+        'profile_user': user,
+        'posts': posts,
         'followers_count': followers_count,
-        'following_count': following_count,
-        'posts': list(posts),
-        'is_following': is_following
-    }, safe=False)
+        'is_following': is_following,
+    }
+
+    return render(request, "network/profile.html", context)
 
 
 @csrf_exempt
