@@ -10,12 +10,12 @@
 }
 
 
-button{
+button.icons{
   background: none;
   border: none;
 }
 
-button:focus {
+button.icons:focus {
   outline: 0px;
 }
 
@@ -184,7 +184,6 @@ body {
 .post__body img {
   width: 20px;
   object-fit: contain;
-  margin-right: 15px;
 }
 
 .post__footer {

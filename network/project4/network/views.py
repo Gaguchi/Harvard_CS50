@@ -42,12 +42,41 @@ def register(request):
         username = request.POST["username"]
         email = request.POST["email"]
 
+def profile(request, username):
+    try:
+        user = User.objects.get(username=username)
+    except User.DoesNotExist:
+        return JsonResponse({"error": "User does not exist."}, status=404)
+
+    followers_count = user.followed_by.count()
+    following_count = user.followers.count()
+    posts = Post.objects.filter(user=user).values('id', 'user__id', 'user__username', 'content', 'timestamp').order_by('-timestamp')
+
+    is_following = False
+    if request.user.is_authenticated:
+        is_following = request.user in user.followed_by.all()
+
+    return JsonResponse({
+        'username': username,
+        'followers_count': followers_count,
+        'following_count': following_count,
+        'posts': list(posts),
+        'is_following': is_following
+    }, safe=False)
+
 
 @csrf_exempt
 def posts(request):
     if request.method == 'GET':
         posts = Post.objects.all().values('id', 'user__id', 'user__username', 'content', 'timestamp')
-        return JsonResponse(list(posts), safe=False)
+        posts_with_likes = []
+        for post in posts:
+            post_id = post['id']
+            likes_count = Post.objects.get(id=post_id).likes.count()
+            post_with_likes = post.copy()
+            post_with_likes['likes_count'] = likes_count
+            posts_with_likes.append(post_with_likes)
+        return JsonResponse(posts_with_likes, safe=False)
     elif request.method == 'POST':
         data = json.loads(request.body)
         user = request.user

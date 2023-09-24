@@ -114,7 +114,7 @@
                     this.componentDidMount();
                 });
             }
-            
+
             deleteComment = (comment_id) => {
                 fetch(`/delete_comment/${comment_id}`, { method: 'DELETE' })
                 .then(response => response.json())
@@ -202,32 +202,32 @@
                                         <div class="post__footer">
                                             {this.state.likedPosts.some(likedPost => likedPost.id === post.id) ? (
                                                 <span class="material-icons">
-                                                    <button onClick={() => this.likePost(post.id)}>
-                                                        <img src="{% static 'network/heart2.png' %}" />
+                                                    <button onClick={() => this.likePost(post.id)} class="icons">
+                                                        <img src="{% static 'network/heart2.png' %}" />{post.likes_count}
                                                     </button>
                                                 </span>
                                             ) : (
                                                 <span class="material-icons">
-                                                    <button onClick={() => this.likePost(post.id)}>
-                                                        <img src="{% static 'network/heart.png' %}" />
+                                                    <button onClick={() => this.likePost(post.id)} class="icons">
+                                                        <img src="{% static 'network/heart.png' %}" />{post.likes_count}
                                                     </button>
                                                 </span>
                                             )}
                                             {this.state.followedPosts.some(followedPost => followedPost.id === post.id) ? (
                                                 <span class="material-icons">
-                                                    <button onClick={() => this.followUser(post.user__id)}>
+                                                    <button onClick={() => this.followUser(post.user__id)} class="icons">
                                                         <img src="{% static 'network/check.png' %}" />
                                                     </button>
                                                 </span>
                                             ) : (
                                                 <span class="material-icons">
-                                                    <button onClick={() => this.followUser(post.user__id)}>
+                                                    <button onClick={() => this.followUser(post.user__id)} class="icons">
                                                         <img src="{% static 'network/add.png' %}" />
                                                     </button>
                                                 </span>
                                             )}
                                             <span class="material-icons">
-                                                {this.state.username === post.user__username && <button onClick={() => this.deletePost(post.id)}><img src="{% static 'network/delete.png' %}" /></button>}
+                                                {this.state.username === post.user__username && <button onClick={() => this.deletePost(post.id)} class="icons"><img src="{% static 'network/delete.png' %}" /></button>}
                                             </span>
                                         </div>
                                         <div>
