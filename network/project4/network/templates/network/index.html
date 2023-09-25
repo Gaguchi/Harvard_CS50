@@ -197,6 +197,7 @@
                                             </div>
                                             <div class="post__headerDescription">
                                                 <p>{post.content}</p>
+                                                <small>Posted on: {new Date(post.timestamp).toLocaleString()}</small>
                                             </div>
                                         </div>
                                         <div class="post__footer">
@@ -231,7 +232,7 @@
                                             </span>
                                         </div>
                                         <div>
-                                            <h3>Comments</h3>
+                                            <h5 class="subheader">Comments</h5>
                                             <div>
                                                 {Array.isArray(this.state.comments[post.id]) ? this.state.comments[post.id].map((comment, index) => (
                                                     <div key={index}>

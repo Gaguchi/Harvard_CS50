@@ -168,6 +168,11 @@ body {
   margin-left: auto;
 }
 
+.subheader{
+  margin-bottom: 0px;
+  margin-top: 10px;
+}
+
 /* post */
 .post__avatar img {
   border-radius: 50%;
