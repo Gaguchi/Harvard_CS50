@@ -175,3 +175,30 @@ def follow_user(request, user_id):
         user_to_follow.followers.add(current_user)
         return JsonResponse({"message": "Followed successfully."})
 
+
+@csrf_exempt
+@login_required  # Require the user to be logged in
+def edit_post(request, post_id):
+    # Only allow PUT method for editing
+    if request.method != 'PUT':
+        return JsonResponse({"error": "PUT request required."}, status=400)
+
+    # Get the post to be edited
+    try:
+        post = Post.objects.get(id=post_id)
+    except Post.DoesNotExist:
+        return JsonResponse({"error": "Post not found."}, status=404)
+
+    # Make sure the logged-in user is the author of the post
+    if request.user != post.user:
+        return JsonResponse({"error": "Not authorized."}, status=403)
+
+    # Parse the request body for the new content
+    data = json.loads(request.body)
+    new_content = data.get('content', "")
+
+    # Update the post content
+    post.content = new_content
+    post.save()
+
+    return JsonResponse({"message": "Post edited successfully."}, status=200)

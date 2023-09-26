@@ -16,6 +16,7 @@
                     followedPosts:[],
                     newPostContent: "",
                     newCommentContent: {},
+                    editPostContent: {},
                     username: "",
                     currentPostId: 1,
                 };
@@ -132,6 +133,31 @@
                 });
             }
 
+            editPost = (post_id) => {
+                fetch(`/edit_post/${post_id}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({
+                        content: this.state.editPostContent[post_id]
+                    }),
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    this.componentDidMount();
+                });
+            }
+
+            handleEditInputChange = (event, post_id) => {
+                this.setState(prevState => ({
+                    editPostContent: {
+                        ...prevState.editPostContent,
+                        [post_id]: event.target.value
+                    }
+                }));
+            };
+            
             followUser = (user_id) => {
                 if (user_id !== undefined) {
                     fetch(`/follow_user/${parseInt(user_id)}`, { method: 'POST' })
@@ -255,6 +281,21 @@
                                                 </div>
                                             ) : (
                                                 <p>You need to log in to comment.</p>
+                                            )}
+                                            {this.state.username === post.user__username && (
+                                                <div>
+                                                    <button onClick={() => this.setState({ currentPostId: post.id })} class="icons">Edit</button>
+                                                    {this.state.currentPostId === post.id && (
+                                                        <div>
+                                                            <input 
+                                                                type="text" 
+                                                                value={this.state.editPostContent[post.id] || post.content} 
+                                                                onChange={(event) => this.handleEditInputChange(event, post.id)}
+                                                            />
+                                                            <button onClick={() => this.editPost(post.id)}>Save</button>
+                                                        </div>
+                                                    )}
+                                                </div>
                                             )}
                                         </div>
                                     </div>
