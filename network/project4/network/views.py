@@ -7,6 +7,7 @@ from django.urls import reverse
 from .models import User, Post, Comment
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
 import json
 
 def index(request):
@@ -61,15 +62,32 @@ def profile(request, username):
 @csrf_exempt
 def posts(request):
     if request.method == 'GET':
-        posts = Post.objects.all().values('id', 'user__id', 'user__username', 'content', 'timestamp')
+        # Get the page number from query parameters (default to 1 if not present)
+        page_number = request.GET.get('page', 1)
+
+        # Fetch all posts
+        all_posts = Post.objects.all().values('id', 'user__id', 'user__username', 'content', 'timestamp').order_by('-timestamp')
+        
+        # Initialize the paginator
+        paginator = Paginator(all_posts, 10)  # Show 10 posts per page
+
+        # Get the Page object for the current page
+        current_page = paginator.get_page(page_number)
+        
         posts_with_likes = []
-        for post in posts:
+        for post in current_page:
             post_id = post['id']
             likes_count = Post.objects.get(id=post_id).likes.count()
             post_with_likes = post.copy()
             post_with_likes['likes_count'] = likes_count
             posts_with_likes.append(post_with_likes)
-        return JsonResponse(posts_with_likes, safe=False)
+
+        return JsonResponse({
+            'posts': posts_with_likes,
+            'has_next': current_page.has_next(),
+            'has_previous': current_page.has_previous(),
+            'num_pages': paginator.num_pages
+        }, safe=False)
     elif request.method == 'POST':
         data = json.loads(request.body)
         user = request.user
@@ -157,6 +175,7 @@ def delete_post(request, post_id):
     else:
         return JsonResponse({"error": "You do not have permission to delete this post."}, status=403)
 
+@login_required
 @csrf_exempt
 def follow_user(request, user_id):
     # Get the user to be followed or unfollowed

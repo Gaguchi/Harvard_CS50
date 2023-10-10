@@ -13,12 +13,13 @@
                     posts: [],
                     comments: {},
                     likedPosts: [],
-                    followedPosts:[],
+                    followedPosts: [],
                     newPostContent: "",
                     newCommentContent: {},
                     editPostContent: {},
                     username: "",
-                    currentPostId: 1,
+                    currentPage: 1,
+                    totalPages: 1,
                 };
             }
 
@@ -26,14 +27,34 @@
                 fetch('/get_username')
                 .then(response => response.json())
                 .then(data => this.setState({ username: data.username }));
+            
+                // Fetch all posts, not just a single page
+                this.loadPage(1);
+            
+                fetch('/liked_posts')
+                .then(response => response.json())
+                .then(data => this.setState({ likedPosts: data }))
+                .catch(error => console.error('Error fetching liked posts:', error));
+            
+                fetch('/followed_posts')
+                .then(response => response.json())
+                .then(data => this.setState({ followedPosts: data }))
+                .catch(error => console.error('Error fetching followed posts:', error));
+            }
+            
 
-                fetch('/posts')
+            loadPage = (pageNumber) => {
+                fetch(`/posts?page=${pageNumber}`)
                 .then(response => response.json())
                 .then(data => {
-                    const sortedData = data.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-                    this.setState({ posts: sortedData });
+                    const sortedPosts = data.posts.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                    this.setState({ 
+                        posts: sortedPosts,
+                        currentPage: pageNumber,
+                        totalPages: data.num_pages
+                    });
                     
-                    sortedData.forEach(post => {
+                    data.posts.forEach(post => {
                         fetch(`/comments?post_id=${post.id}`)
                         .then(response => response.json())
                         .then(data => {
@@ -45,23 +66,49 @@
                             }));
                         });
                     });
-
-                    fetch('/liked_posts')
-                    .then(response => response.json())
-                    .then(data => this.setState({ likedPosts: data }))
-                    .catch(error => console.error('Error fetching liked posts:', error));
-
-                    fetch('/followed_posts')
-                    .then(response => response.json())
-                    .then(data => this.setState({ followedPosts: data }))
-                    .catch(error => console.error('Error fetching liked posts:', error));
                 });
-            }
+            };
 
             handleInputChange = (event) => {
                 this.setState({ newPostContent: event.target.value });
             }
             
+            filterLikedPosts = () => {
+                fetch('/liked_posts')  // Fetch all liked posts
+                .then(response => response.json())
+                .then(data => {
+                    const totalPages = Math.ceil(data.length / 10);  // Calculate total pages, 10 posts per page
+                    this.setState({ 
+                        posts: data, 
+                        currentPage: 1,
+                        totalPages: totalPages
+                    });
+                })
+                .catch(error => console.error('Error fetching all liked posts:', error));
+            };
+            
+            filterFollowedPosts = () => {
+                fetch('/followed_posts')  // Fetch all followed posts
+                .then(response => response.json())
+                .then(data => {
+                    const totalPages = Math.ceil(data.length / 10);  // Calculate total pages, 10 posts per page
+                    this.setState({ 
+                        posts: data,
+                        currentPage: 1,
+                        totalPages: totalPages
+                    });
+                })
+                .catch(error => console.error('Error fetching all followed posts:', error));
+            };
+                        
+            followUser = (user_id) => {
+                fetch(`/follow_user/${user_id}`, { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    this.loadPage(this.state.currentPage);
+                });
+            }
+
             handleCommentChange = (event, post_id) => {
                 this.setState(prevState => ({
                     newCommentContent: {
@@ -70,7 +117,6 @@
                     }
                 }));
             };
-            
 
             createPost = () => {
                 fetch('/posts', {
@@ -88,7 +134,7 @@
                         posts: [data, ...prevState.posts],
                         newPostContent: ""
                     }));
-                    this.componentDidMount();
+                    this.loadPage(this.state.currentPage);
                 });
             }
 
@@ -112,7 +158,7 @@
                         },
                         newCommentContent: ""
                     }));
-                    this.componentDidMount();
+                    this.loadPage(this.state.currentPage);
                 });
             }
 
@@ -120,18 +166,46 @@
                 fetch(`/delete_comment/${comment_id}`, { method: 'DELETE' })
                 .then(response => response.json())
                 .then(data => {
-                    this.componentDidMount();
+                    this.loadPage(this.state.currentPage);
                 });
             };
-            
 
             likePost = (post_id) => {
                 fetch(`/like_post/${post_id}`, { method: 'POST' })
                 .then(response => response.json())
                 .then(data => {
-                    this.componentDidMount();
+                    fetch('/liked_posts')  // Re-fetch liked posts
+                    .then(response => response.json())
+                    .then(data => {
+                        this.setState({ likedPosts: data }, () => {
+                            this.loadPage(this.state.currentPage);  // Reload the posts
+                        });
+                    });
                 });
             }
+            
+            followUser = (user_id) => {
+                fetch(`/follow_user/${user_id}`, { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    fetch('/followed_posts')  // Re-fetch followed posts
+                    .then(response => response.json())
+                    .then(data => {
+                        this.setState({ followedPosts: data }, () => {
+                            this.loadPage(this.state.currentPage);  // Reload the posts
+                        });
+                    });
+                });
+            }
+
+            handleEditInputChange = (event, post_id) => {
+                this.setState(prevState => ({
+                    editPostContent: {
+                        ...prevState.editPostContent,
+                        [post_id]: event.target.value
+                    }
+                }));
+            };
 
             editPost = (post_id) => {
                 fetch(`/edit_post/${post_id}`, {
@@ -145,48 +219,7 @@
                 })
                 .then(response => response.json())
                 .then(data => {
-                    this.componentDidMount();
-                });
-            }
-
-            handleEditInputChange = (event, post_id) => {
-                this.setState(prevState => ({
-                    editPostContent: {
-                        ...prevState.editPostContent,
-                        [post_id]: event.target.value
-                    }
-                }));
-            };
-            
-            followUser = (user_id) => {
-                if (user_id !== undefined) {
-                    fetch(`/follow_user/${parseInt(user_id)}`, { method: 'POST' })
-                    .then(response => response.json())
-                    .then(data => {
-                        this.componentDidMount();
-                    });
-                } else {
-                    console.error('User ID is undefined');
-                }
-            }
-
-            filterLikedPosts = () => {
-                fetch('/liked_posts')
-                .then(response => response.json())
-                .then(data => this.setState({ posts: data }));
-            }
-
-            filterFollowedPosts = () => {
-                fetch('/followed_posts')
-                .then(response => response.json())
-                .then(data => this.setState({ posts: data }));
-            }
-
-            deletePost = (post_id) => {
-                fetch(`/delete_post/${post_id}`, { method: 'DELETE' })
-                .then(response => response.json())
-                .then(data => {
-                    this.componentDidMount();
+                    this.loadPage(this.state.currentPage);
                 });
             }
 
@@ -196,6 +229,11 @@
                         <h1>All Posts</h1>
                         <button onClick={this.filterLikedPosts}>Show Liked Posts</button>
                         <button onClick={this.filterFollowedPosts}>Show Followed Posts</button>
+                        <button disabled={this.state.currentPage === 1} onClick={() => this.loadPage(this.state.currentPage - 1)}>Previous</button>
+                        <span>Page {this.state.currentPage} of {this.state.totalPages}</span>
+                        <button disabled={this.state.currentPage === this.state.totalPages} onClick={() => this.loadPage(this.state.currentPage + 1)}>Next</button>
+
+
                         <div class="feed">
                             <div class="feed__header">
                               <h2>Home</h2>
